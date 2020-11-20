@@ -1,115 +1,130 @@
-version: '3.7'
-
+version: "3.7"
 services:
+  drupal:
+    image: obiba/docker-obiba-drupal:latest
+    ports:
+      - "8884:80"
+    links:
+      - mysql
+      - mica
+      - agate
+    environment:
+      - MYSQL_DATABASE=drupal_mica
+      - MYSQL_ROOT_PASSWORD=password
+      - DRUPAL_ADMINISTRATOR_PASSWORD=password
+      - MICA_ANONYMOUS_PASSWORD=password
+      - MYSQL_PORT_3306_TCP_ADDR=172.16.0.6
+      - AGATE_PORT_8444_TCP_ADDR=172.16.0.4
+      - MICA_PORT_8445_TCP_ADDR=172.16.0.2
+    volumes:
+      - drupal_sites_modules:/var/www/html/sites/all/modules
+      - drupal_sites_libraries:/var/www/html/sites/all/libraries
+      - drupal_sites_themes:/var/www/html/sites/all/themes
+      - drupal_sites_vendor:/var/www/html/sites/all/vendor
+      - drupal_sites_default:/var/www/html/sites/default
+    networks:
+      nightlynw:
+        ipv4_address: 172.16.0.9
   mica:
-    image: obiba/mica:snapshot
+    image: obiba/mica:latest
     ports:
-    - "8845:8445"
-    - "8882:8082"
-    links:
-    - mongo
-    - opal
-    - agate
-    environment:
-    - MICA_ADMINISTRATOR_PASSWORD=password
-    - MICA_ANONYMOUS_PASSWORD=password
-    - MONGO_PORT_27017_TCP_ADDR=172.20.128.10
-    - MONGO_PORT_27017_TCP_PORT=27017
-    - AGATE_PORT_8444_TCP_ADDR=172.20.128.13
-    - AGATE_PORT_8444_TCP_PORT=8444
-    - OPAL_PORT_8443_TCP_ADDR=172.20.128.11
-    - OPAL_PORT_8443_TCP_PORT=8443
+      - "8845:8445"
+      - "8882:8082"
     volumes:
-    - /tmp/mica:/srv
+      - /data/containers/mica_srv:/srv
+    links:
+      - mongo
+      - opal
+      - agate
+    environment:
+      - MICA_ADMINISTRATOR_PASSWORD=password
+      - MICA_ANONYMOUS_PASSWORD=password
+      - OPAL_PORT_8443_TCP_ADDR=172.16.0.3
+      - OPAL_PORT_8443_TCP_PORT=8443
+      - AGATE_PORT_8444_TCP_ADDR=172.16.0.4
+      - AGATE_PORT_8444_TCP_PORT=8444
+      - MONGO_PORT_27017_TCP_ADDR=172.16.0.5
+      - MONGO_PORT_27017_TCP_PORT=27017
     networks:
-      obiba_network:
-        ipv4_address: 172.20.128.12
+      nightlynw:
+        ipv4_address: 172.16.0.2
   opal:
-    image: obiba/opal:snapshot
+    image: obiba/opal:latest
     ports:
-    - "8843:8443"
-    - "8880:8080"
+      - "8843:8443"
+      - "8880:8080"
     links:
-    - mongo
-    - mysqldata
-    - mariadbdata
-    - postgresdata
-    - rserver
+      - mongo
+      - agate
+      - rserver
     environment:
-    - OPAL_ADMINISTRATOR_PASSWORD=password
-    - MONGO_PORT_27017_TCP_ADDR=172.20.128.10
-    - MONGO_PORT_27017_TCP_PORT=27017
-    - AGATE_PORT_8444_TCP_ADDR=172.20.128.13
-    - AGATE_PORT_8444_TCP_PORT=8444
-    - MYSQLDATA_DATABASE=opal
-    - MYSQLDATA_HOST=mysqldata
-    - MYSQLDATA_USER=opal
-    - MYSQLDATA_PASSWORD=password
-    - MARIADBDATA_DATABASE=opal
-    - MARIADBDATA_HOST=mariadbdata
-    - MARIADBDATA_USER=opal
-    - MARIADBDATA_PASSWORD=password
-    - POSTGRESDATA_DATABASE=opal
-    - POSTGRESDATA_HOST=postgresdata
-    - POSTGRESDATA_USER=opal
-    - POSTGRESDATA_PASSWORD=password
-    - RSERVER_HOST=rserver
+      - OPAL_ADMINISTRATOR_PASSWORD=password
+      - AGATE_PORT_8444_TCP_ADDR=172.16.0.4
+      - AGATE_PORT_8444_TCP_PORT=8444
+      - MONGO_PORT_27017_TCP_ADDR=172.16.0.5
+      - MONGO_PORT_27017_TCP_PORT=27017
+      - RSERVER_HOST=172.16.0.8
     volumes:
-    - /tmp/opal:/srv
+      - /data/containers/opal_srv:/srv
     networks:
-      obiba_network:
-        ipv4_address: 172.20.128.11
-  agate:
-    image: obiba/agate:snapshot
-    ports:
-    - "8844:8444"
-    - "8881:8081"
-    links:
-    - mongo
-    environment:
-    - AGATE_ADMINISTRATOR_PASSWORD=password
-    - MONGO_PORT_27017_TCP_ADDR=172.20.128.10
-    - MONGO_PORT_27017_TCP_PORT=27017
-    volumes:
-    - /tmp/agate:/srv
-    networks:
-      obiba_network:
-        ipv4_address: 172.20.128.13
-  mongo:
-    image: mongo:4.0
-    volumes:
-      - /tmp/mongo_db:/data/db
-      - /tmp/mongo_configdb:/data/configdb
-    networks:
-      obiba_network:
-        ipv4_address: 172.20.128.10
-  mysqldata:
-    image: mysql:5
-    environment:
-        - MYSQL_DATABASE=opal
-        - MYSQL_ROOT_PASSWORD=password
-        - MYSQL_USER=opal
-        - MYSQL_PASSWORD=password
-  mariadbdata:
-      image: mariadb
-      environment:
-          - MYSQL_DATABASE=opal
-          - MYSQL_ROOT_PASSWORD=password
-          - MYSQL_USER=opal
-          - MYSQL_PASSWORD=password
-  postgresdata:
-      image: postgres
-      environment:
-          - POSTGRES_DB=opal
-          - POSTGRES_USER=opal
-          - POSTGRES_PASSWORD=password
+      nightlynw:
+        ipv4_address: 172.16.0.3
   rserver:
-      image: obiba/opal-rserver:latest
-      volumes:
-          - /tmp/rserver:/srv
+    image: obiba/opal-rserver:latest
+    networks:
+      nightlynw:
+        ipv4_address: 172.16.0.8
+  agate:
+    image: obiba/agate:latest
+    ports:
+      - "8844:8444"
+      - "8881:8081"
+    links:
+      - mongo
+    environment:
+      - AGATE_ADMINISTRATOR_PASSWORD=password
+      - RECAPTCHA_SITE_KEY=6LeSuIgUAAAAABfC1SiVv-M0EtRQQCBabz6vocjm
+      - RECAPTCHA_SECRET_KEY=6LeSuIgUAAAAAIGzOkM1686ajsinDBhFid9LSFUJ
+      - MONGO_PORT_27017_TCP_ADDR=172.16.0.5
+      - MONGO_PORT_27017_TCP_PORT=27017
+    volumes:
+      - /data/containers/agate_srv:/srv
+    networks:
+      nightlynw:
+        ipv4_address: 172.16.0.4
+  mongo:
+    image: mongo:3.4
+    volumes:
+      - /data/containers/mongo_configdb:/data/configdb
+      - /data/containers/mongo_db:/data/db
+    networks:
+      nightlynw:
+        ipv4_address: 172.16.0.5
+  mysql:
+    image: mysql:5.7
+    environment:
+      - MYSQL_DATABASE=drupal_mica
+      - MYSQL_USER=drupal
+      - MYSQL_USER_HOST=172.16.0.1/255.255.255.246
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=password
+      # This allows ip ranges from 192.168.0.49 to 192.168.0.54 to connect to root
+      - MYSQL_ROOT_HOST=172.16.0.1/255.255.255.246
+    volumes:
+      - /data/containers/mysql_db:/var/lib/mysql
+    restart: always
+    networks:
+      nightlynw:
+        ipv4_address: 172.16.0.6
+volumes:
+  drupal_sites_modules:
+  drupal_sites_libraries:
+  drupal_sites_themes:
+  drupal_sites_vendor:
+  drupal_sites_default:
 networks:
-  obiba_network:
+  nightlynw:
     ipam:
       driver: default
       config:
-        - subnet: 172.20.128.1/24
+        - subnet: "172.16.0.0/24"
