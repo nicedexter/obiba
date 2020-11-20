@@ -31,12 +31,29 @@ services:
     - "8880:8080"
     links:
     - mongo
+    - mysqldata
+    - mariadbdata
+    - postgresdata
+    - rserver
     environment:
     - OPAL_ADMINISTRATOR_PASSWORD=password
     - MONGO_PORT_27017_TCP_ADDR=172.20.128.10
     - MONGO_PORT_27017_TCP_PORT=27017
     - AGATE_PORT_8444_TCP_ADDR=172.20.128.13
     - AGATE_PORT_8444_TCP_PORT=8444
+    - MYSQLDATA_DATABASE=opal
+    - MYSQLDATA_HOST=mysqldata
+    - MYSQLDATA_USER=opal
+    - MYSQLDATA_PASSWORD=password
+    - MARIADBDATA_DATABASE=opal
+    - MARIADBDATA_HOST=mariadbdata
+    - MARIADBDATA_USER=opal
+    - MARIADBDATA_PASSWORD=password
+    - POSTGRESDATA_DATABASE=opal
+    - POSTGRESDATA_HOST=postgresdata
+    - POSTGRESDATA_USER=opal
+    - POSTGRESDATA_PASSWORD=password
+    - RSERVER_HOST=rserver
     volumes:
     - /tmp/opal:/srv
     networks:
@@ -66,6 +83,30 @@ services:
     networks:
       obiba_network:
         ipv4_address: 172.20.128.10
+  mysqldata:
+    image: mysql:5
+    environment:
+        - MYSQL_DATABASE=opal
+        - MYSQL_ROOT_PASSWORD=password
+        - MYSQL_USER=opal
+        - MYSQL_PASSWORD=password
+  mariadbdata:
+      image: mariadb
+      environment:
+          - MYSQL_DATABASE=opal
+          - MYSQL_ROOT_PASSWORD=password
+          - MYSQL_USER=opal
+          - MYSQL_PASSWORD=password
+  postgresdata:
+      image: postgres
+      environment:
+          - POSTGRES_DB=opal
+          - POSTGRES_USER=opal
+          - POSTGRES_PASSWORD=password
+  rserver:
+      image: obiba/opal-rserver:latest
+      volumes:
+          - /tmp/rserver:/srv
 networks:
   obiba_network:
     ipam:
